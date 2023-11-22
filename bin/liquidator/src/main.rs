@@ -314,7 +314,7 @@ fn grpc_update_accounts(
                             .expect("sending must succeed");
                     }
                     _ => {
-                        log::info!("another account")
+                        //log::info!("another account")
                     }
                 }
             }
@@ -703,7 +703,7 @@ async fn main() -> anyhow::Result<()> {
                     took_tcs = liquidation
                         .maybe_take_token_conditional_swap(account_addresses.iter())
                         .await
-                        .unwrap();
+                        .unwrap_or_default();
                 }
 
                 if liquidated || took_tcs {
@@ -930,7 +930,7 @@ impl LiquidationState {
                     } else {
                         for it in v.iter() {
                             if let Err(e) = it {
-                                info!("error on tcs find_interesting: {:?}", e);
+                                //info!("error on tcs find_interesting: {:?}", e);
                                 self.tcs_collection_partial_errors.record_error(
                                     pubkey,
                                     now,
