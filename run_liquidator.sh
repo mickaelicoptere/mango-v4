@@ -1,0 +1,1 @@
+cargo run --bin liquidator --release -- --liqor-mango-account 43dEtfUoL1dN9v4JPFB5KSkHHFF4bswGn6mUJ9dpEAix --liqor-owner ~/mangolana/liquidator.json --parallel-rpc-requests 100 --prioritization-micro-lamports 5 --rpc-url https://mango.rpcpool.com/451b9678-abc5-4f8a-b6c6-12cdcb40d448 --telemetry false --min-health-ratio 20 --check_interval_ms 200

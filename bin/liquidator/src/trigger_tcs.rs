@@ -468,6 +468,9 @@ impl Context {
             .unwrap_or(I80F48::ZERO);
 
         // this is in "buy token received per sell token given" units
+        if maker_price == 0.0 {
+            anyhow::bail!("Maker price is 0")
+        }
         let swap_price = I80F48::from_num((1.0 - SLIPPAGE_BUFFER) / maker_price);
         let max_sell_ignoring_net_borrows = util::max_swap_source_ignore_net_borrows(
             &self.mango_client,
@@ -497,7 +500,10 @@ impl Context {
         // net borrow limits. Then skip. If it's tiny for other reasons we can proceed.
 
         fn available_borrows(bank: &Bank, price: I80F48) -> u64 {
-            (bank.remaining_net_borrows_quote(price) / price).clamp_to_u64()
+            (bank
+                .remaining_net_borrows_quote(price)
+                .saturating_div(price))
+            .clamp_to_u64()
         }
         let available_buy_borrows = available_borrows(&buy_bank, buy_token_price);
         let available_sell_borrows = available_borrows(&sell_bank, sell_token_price);
@@ -532,8 +538,12 @@ impl Context {
             max_buy_ignoring_net_borrows - buy_borrows + buy_borrows.min(available_buy_borrows);
 
         let tiny_due_to_net_borrows = {
-            let buy_threshold = I80F48::from(NET_BORROW_EXECUTION_THRESHOLD) / buy_token_price;
-            let sell_threshold = I80F48::from(NET_BORROW_EXECUTION_THRESHOLD) / sell_token_price;
+            let buy_threshold = I80F48::from(NET_BORROW_EXECUTION_THRESHOLD)
+                .checked_div(buy_token_price)
+                .ok_or(anyhow::Error::msg("Div error"))?;
+            let sell_threshold = I80F48::from(NET_BORROW_EXECUTION_THRESHOLD)
+                .checked_div(sell_token_price)
+                .ok_or(anyhow::Error::msg("Div error"))?;
             max_buy < buy_threshold && max_buy_ignoring_net_borrows > buy_threshold
                 || max_sell < sell_threshold && max_sell_ignoring_net_borrows > sell_threshold
         };
